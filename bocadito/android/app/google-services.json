@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "37294180547",
+    "project_id": "sansano-store",
+    "storage_bucket": "sansano-store.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37294180547:android:b737c3935314dc12677a76",
+        "android_client_info": {
+          "package_name": "com.projectinf320.bocadito"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPhGBSd3m-IYAG-GjOObvfnI9ZqrX7nYc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

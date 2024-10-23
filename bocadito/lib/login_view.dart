@@ -1,12 +1,9 @@
+import 'package:bocadito/mainscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'signup_view.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'utils/auth.dart'; // Importamos el archivo auth.dart
-import 'profile_view.dart';
+import 'utils/auth.dart';
 
-// Pantalla de inicio de sesión
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -14,36 +11,33 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormBuilderState>();
-  final AuthService _authService = AuthService(); // Instanciamos AuthService
+  final AuthService _authService = AuthService();
 
-  // Función para autenticar al usuario utilizando AuthService
+  //Autenticación del usuario utilizando AuthService
   Future<void> _loginUser(String email, String password) async {
     final result = await _authService.signInEmailAndPassword(email, password);
     if (result is String) {
-      // Usuario autenticado correctamente
       print('Usuario autenticado: $result');
     } else if (result == 1) {
-      // Usuario no encontrado
       print('Usuario no encontrado.');
     } else if (result == 2) {
-      // Contraseña incorrecta
       print('Contraseña incorrecta.');
     } else {
       print('Error durante la autenticación.');
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87, // Color de fondo
+      backgroundColor: Colors.black87,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Icono del usuario
               const CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.white,
@@ -60,9 +54,10 @@ class _LoginPageState extends State<LoginPage> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Campo de texto para el correo electrónico
+                    // Campo correo electrónico
                     FormBuilderTextField(
                       name: 'email',
+                      obscureText: false,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.person, color: Colors.blue),
                         hintText: 'Correo electrónico',
@@ -74,15 +69,15 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       validator: FormBuilderValidators.compose([
-                        FormBuilderValidators.required(
-                            errorText: 'Este campo es obligatorio'),
-                        FormBuilderValidators.email(
-                            errorText: 'Ingrese un correo válido'),
+                        FormBuilderValidators.required(errorText: 'Este campo es obligatorio'),
+                        FormBuilderValidators.email(errorText: 'Ingrese un correo válido'),
                       ]),
                     ),
                     const SizedBox(height: 20),
 
-                    // Campo de texto para la contraseña
+                    //-------------------------------------
+
+                    // Campo contraseña
                     FormBuilderTextField(
                       name: 'password',
                       obscureText: true,
@@ -114,25 +109,24 @@ class _LoginPageState extends State<LoginPage> {
                           final email = _formKey.currentState?.fields['email']?.value;
                           final password = _formKey.currentState?.fields['password']?.value;
 
-                          // Llamamos al método de autenticación
                           dynamic result = await _authService.signInEmailAndPassword(email, password);
                           
                           if (result == 1) {
-                            // Manejar usuario
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                               content: Text('Error, usuario no encontrado.'),
                             ));
                           } else if (result == 2) {
-                            // Manejar contraseña
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                               content: Text('Contraseña incorrecta.'),
                             ));
                           } else if (result != null) {
-                            // Login exitoso, puedes redirigir o mostrar un mensaje
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(builder: (context) => ProfilePage()),
+                              MaterialPageRoute(
+                                builder: (context) => Mainscreen(loged: 1, userID: result,)
+                              ),
                             );
+                            print('supuesto id del usuario logeado es: '+result);
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                               content: Text('Usuario logeado exitosamente.'),
                             ));
@@ -157,7 +151,7 @@ class _LoginPageState extends State<LoginPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        backgroundColor: Colors.purple, // Color del botón
+                        backgroundColor: Colors.purple, 
                       ),
                       child: const Text(
                         'Log in',
@@ -173,7 +167,8 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => SignUpPage()),
+                            builder: (context) => Mainscreen(loged: 2, userID: '',)
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -196,22 +191,6 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
         ),
-      ),
-      // Barra de navegación inferior
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.cyanAccent,
-        unselectedItemColor: Colors.white,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '',
-          ),
-        ],
       ),
     );
   }

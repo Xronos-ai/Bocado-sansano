@@ -1,9 +1,9 @@
+import 'package:bocadito/mainscreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'utils/auth.dart'; // Importamos el archivo auth.dart
-import 'login_view.dart';
-import 'profile_view.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -114,23 +114,27 @@ class _SignUpPageState extends State<SignUpPage> {
                       dynamic result = await _authService.createAcount(email, password);
                       
                       if (result == 1) {
-                        // Manejar contraseña débil
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                           content: Text('Error, contraseña débil. Por favor cambiar contraseña.'),
                         ));
                       } else if (result == 2) {
-                        // Manejar correo ya existente
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                           content: Text('Error, el email ya está en uso.'),
                         ));
                       } else if (result != null) {
-                        // Registro exitoso, puedes redirigir o mostrar un mensaje
+                        // Registro exitoso, inicializa el listado de tiendas del nuevo usuario
+                        FirebaseFirestore.instance.collection('usuarios').doc(result).set({
+                          'misTiendas': []
+                        });
+                        print('el result id de usuario es: '+result);
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => ProfilePage()),
+                          MaterialPageRoute(
+                            builder: (context) => Mainscreen(loged: 0, userID: '',)
+                          ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Usuario registrado exitosamente.'),
+                          content: Text('Registrado exitosamente, ya puedes iniciar sesión.'),
                         ));
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -144,7 +148,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    backgroundColor: Colors.purple, // Color del botón
+                    backgroundColor: Colors.purple, 
                   ),
                   child: const Text(
                     'Sign up',
@@ -153,13 +157,14 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 10),
                 
-                // Botón de "No tienes cuenta?"
+                // Botón de "Ya tienes cuenta?"
                 ElevatedButton(
                   onPressed: () {
-                    // Navegar a la página de registro
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
+                      MaterialPageRoute(
+                        builder: (context) => Mainscreen(loged: 0, userID: '',)
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -167,7 +172,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    backgroundColor: const Color.fromARGB(255, 59, 59, 59), // Color del botón
+                    backgroundColor: const Color.fromARGB(255, 59, 59, 59), 
                   ),
                   child: const Text(
                     '¿Ya tienes cuenta?',
@@ -177,22 +182,6 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
           ),
         ),
-      ),
-      // Barra de navegación inferior
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.cyanAccent,
-        unselectedItemColor: Colors.white,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '',
-          ),
-        ],
       ),
     );
   }

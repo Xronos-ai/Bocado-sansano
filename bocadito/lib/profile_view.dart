@@ -14,12 +14,18 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   TextEditingController priceProduct = TextEditingController(text: '');
   TextEditingController descriptionProduct = TextEditingController(text: '');
-  bool _isFormVisible = false; // Visibilidad del formulario
+  bool _isFormVisible = false; // Visibilidad del formulario "Añadir tienda"
   bool _storesVisible = false; // Visibilidad de "Mis tiendas"
-  final List<Widget> _productForms = []; // Lista para almacenar los formularios de productos
   final List<Map<String, dynamic>> _productMaps = []; // Lista para almacenar los productos para firestore
+  final Map<String, bool> _paymentsCheck = {
+    'Junaeb': false,
+    'Tarjeta': false,
+    'Efectivo': false,
+    'Transferencia': false
+    }; //Lista para almacenar medios de pagos aceptados
   List<String> refTiendas = []; // Lista de referencias de las tiendas del usuario
   List<Widget> myStores = [];
+  List<ProductForm> _productForms = [];
 
   @override
   void initState() {
@@ -55,245 +61,88 @@ class _ProfilePageState extends State<ProfilePage> {
     //-----------------------------
   }
 
-  //----------------------
+  Map<String, bool> _dynamicToBool (Map<String, dynamic> mapaDinamico){
+    Map<String, bool> pagosBool = mapaDinamico.map((key, value) {
+      return MapEntry(key, value as bool); // Hacemos el casting de 'dynamic' a 'bool'
+    });
+    return pagosBool;
+  }
+  
+  //--- storesBuilder() retorna una lista con las tiendas del usuario 
   Future<List<Widget>> storesBuilder() async {
-    // Esperamos a que se completen las futuras de Firestore
-    List<DocumentSnapshot> tiendasDocs = await Future.wait(
-      refTiendas.map((id) => FirebaseFirestore.instance.collection('tiendas').doc(id).get()).toList(),
-    );
-
-    // Creamos una lista de widgets para almacenar los resultados
-    List<Widget> tiendaWidgets = [];
-
-    for (var tiendaDoc in tiendasDocs) {
-      var tiendaData = tiendaDoc.data() as Map<String, dynamic>;
-
-      // Agregamos el widget a la lista
-      tiendaWidgets.add(
-        StoreEdit(
-          storeName: tiendaData['nombre'],
-          iconData: Icons.restaurant,
-          location: tiendaData['ubicacion'],
-          payments: tiendaData['pagos'],
-          time: tiendaData['horario'],
-          contact: tiendaData['contacto'],
-          products: tiendaData['productos'],
-        ),
+    if (refTiendas.isNotEmpty){
+      // Listado con todas las tiendas que el usuario tenga registradas
+      List<DocumentSnapshot> tiendasDocs = await Future.wait(
+        refTiendas.map((id) => FirebaseFirestore.instance.collection('tiendas').doc(id).get()).toList(),
       );
-    }
 
-    return tiendaWidgets; // Retornamos la lista de widgets
+      // Creamos una lista de widgets para almacenar los resultados
+      List<Widget> tiendaWidgets = [];
+      int indx = 0;
+
+      for (var tiendaDoc in tiendasDocs) {
+        var tiendaData = tiendaDoc.data() as Map<String, dynamic>;
+        String idTienda = refTiendas[indx];
+
+        // Agregamos el widget a la lista
+        tiendaWidgets.add(
+          StoreEdit(
+            usrID: widget.idUsuario,
+            storeID: idTienda,
+            storeName: tiendaData['nombre'],
+            iconData: Icons.restaurant,
+            location: tiendaData['ubicacion'],
+            payments: _dynamicToBool(tiendaData['pagos']),
+            time: tiendaData['horario'],
+            contact: tiendaData['contacto'],
+            products: tiendaData['productos'],
+          ),
+        );
+        indx++;
+      }
+
+      return tiendaWidgets;
+
+    }else{
+      return [];
+    }
   }
 
   //----------------------
-
-  int idW = 0;
-  // Añadir formulario de producto
   void _addProductForm() {
     setState(() {
-      idW++;
-      _productForms.add(_buildProductForm(idW));
+      final formKey = GlobalKey<_ProductFormState>();
+      _productForms.add(
+        ProductForm(
+          idW: UniqueKey().hashCode, 
+          onDelete: (idW) => _removeProductForm(idW),
+          formKey: formKey,
+        )
+      );
     });
   }
-
-  // Eliminar formulario de producto
-  void _removeProductForm(int idKey) {
+  //-----------------------
+  void _removeProductForm(int idW) {
     setState(() {
-      int posicion = _productForms.indexWhere((widget) => (widget.key as ValueKey).value == idKey);
-      print('idKey: '+idKey.toString()+', posicion: '+posicion.toString());
-      _productForms.removeAt(posicion);
+      _productForms.removeWhere((form) => form.idW == idW);
     });
-    int posMap = _productMaps.indexWhere((mapa) => mapa['idM'] == idKey);
-    _productMaps.removeAt(posMap);
-  }
-
-  // Widget que genera el formulario para productos
-  Widget _buildProductForm(idW) {
-    print('idW: ' + idW.toString());
-    Map<String, dynamic> productInfo = {
-      'idM': idW,
-      'nombreP': '',
-      'precio': '',
-      'descripcion': '',
-    };
-    _productMaps.add(productInfo);
-    return Column(
-      key: ValueKey(idW),
-      children: [
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Nombre del producto',
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  border: OutlineInputBorder(),
-                ),
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-                onChanged: (String nameP) {
-                  productInfo['nombreP'] = nameP;
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextFormField(
-                decoration: InputDecoration(
-                  labelText: '\$Precio',
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  border: OutlineInputBorder(),
-                ),
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (String precioP) {
-                  productInfo['precio'] = precioP;
-                },
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.photo_camera, color: Colors.blue),
-              onPressed: () {
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        TextFormField(
-          decoration: InputDecoration(
-            labelText: 'Agregar descripción del producto',
-            labelStyle: const TextStyle(color: Colors.blue),
-            border: OutlineInputBorder(),
-          ),
-          style: TextStyle(
-            color: Colors.white,
-          ),
-          onChanged: (String descripcionP) {
-            productInfo['descripcion'] = descripcionP;
-          },
-        ),
-        const SizedBox(height: 10),
-        IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () {
-            _removeProductForm(idW);
-          }
-        ),
-        const Divider(
-          color: Colors.purple,
-          thickness: 2,
-        ),
-      ],
-    );
   }
   //------------------------
-  Widget _buildProductView(String productName, String precio, String descripcion) {
-    return Card(
-      color: Colors.grey[900],
-      margin: EdgeInsets.symmetric(vertical: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              color: Colors.grey, // Placeholder para imagen de producto
-              child: Icon(Icons.add_photo_alternate, color: Colors.white),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  //-----------------------------
-                  TextFormField(
-                    //controller: productName,
-                    decoration: InputDecoration(
-                      labelText: 'Nombre del producto',
-                      labelStyle: TextStyle(color: Colors.cyanAccent),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.purple),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.purpleAccent),
-                      ),
-                    ),
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  //-----------------------------
-                  TextFormField(
-                    //controller: descripcion,
-                    decoration: InputDecoration(
-                      labelText: 'Descripción del producto',
-                      labelStyle: TextStyle(color: Colors.cyanAccent),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.purple),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.purpleAccent),
-                      ),
-                    ),
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  //-----------------------------
-                ],
-              ),
-            ),
-            TextFormField(
-              //controller: precio,
-              decoration: InputDecoration(
-                labelText: 'Precio',
-                labelStyle: TextStyle(color: Colors.cyanAccent),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.purple),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.purpleAccent),
-                ),
-              ),
-             style: TextStyle(color: Colors.white),
-            ),
-            //-----------------------------
-            IconButton(
-              icon: Icon(Icons.delete, color: Colors.redAccent),
-              onPressed: () {
-                // Acción para eliminar producto
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  //-----------------
-  List<Widget> _listarProductos (List<dynamic> productsMaps){
-    List<Widget> productsView = [];
-    for (var item in productsMaps){
-      Map<String, dynamic> mapa = item as Map<String, dynamic>;
-      //TextEditingController nameProduct = TextEditingController(text: mapa['nombreP']);
-      productsView.add(_buildProductView(mapa['nombreP'], mapa['precio'], mapa['descripcion']));
+  void _collectProductInfo() {
+    _productMaps.clear(); // Limpiamos la lista antes de llenarla
+    for (var productForm in _productForms) {
+      final productInfo = productForm.formKey.currentState?.getProductInfo();
+      if (productInfo != null) {
+        _productMaps.add(productInfo);
+      }
     }
-    return productsView;
-  }
+  }  
 
-  // Espacio para el CRUD y las variables
+  //------ Espacio para el CRUD y las variables ------
   String storeName = '', storePayments = '', 
-  storeHours = '', storeLocation = '', 
-  storeID = '', storeContact = '';
-
-  // --------- Zona Tiendas ----------- //
-
-  getStoreID(idStore){
-    storeID = idStore;
-  }
-
+  storeHours = '', storeLocation = '', storeContact = '';
+  
+  // --------- Zona Tiendas ----------- 
   getStoreName(name){
     storeName = name;
   }
@@ -317,17 +166,19 @@ class _ProfilePageState extends State<ProfilePage> {
   // --------- Zona Manejo de Data ----------- //
   Future<void> createData() async {
     Map<String, dynamic> stores = {
-      'idTienda': storeID,
       'nombre': storeName,
-      'pagos': storePayments,
+      'pagos': _paymentsCheck,
       'ubicacion': storeLocation,
       'horario': storeHours,
       'contacto': storeContact,
       'productos': _productMaps
     };
 
+    // Añadimos la tienda a firestore en la colección 'tiendas' que contiene la información del mapa 'stores'
     DocumentReference docstore = await FirebaseFirestore.instance.collection('tiendas').add(stores);
 
+    // A refTiendas (lista con los id de las tiendas de este usuario) le añadimos
+    // el id de la nueva tienda creada
     refTiendas.add(docstore.id);
     myStores = await storesBuilder();
 
@@ -354,7 +205,6 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              
               const SizedBox(height: 40), 
 
               // Icono y nombre de usuario
@@ -399,51 +249,70 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 40),
 
               // Botón de "Mis tiendas"
-              ListTile(
-                leading: const Icon(Icons.store, color: Colors.blue),
-                title: const Text(
-                  'Mis tiendas',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.purple, // Color del borde
+                    width: 2.0,              // Grosor del borde
+                  ),
+                  borderRadius: BorderRadius.circular(10), // Borde redondeado (opcional)
                 ),
-                trailing: Icon(
-                  _storesVisible ? Icons.expand_more : Icons.arrow_forward_ios,
-                  color: Colors.white,
+                child: ListTile(
+                  leading: const Icon(Icons.store, color: Colors.blue),
+                  title: const Text(
+                    'Mis tiendas',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  trailing: Icon(
+                    _storesVisible ? Icons.expand_more : Icons.arrow_forward_ios,
+                    color: Colors.white,
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _storesVisible = !_storesVisible; 
+                      _isFormVisible = false;
+                    });
+                    print('Las refTiendas (Mis Tiendas) son: ' + refTiendas.toString());
+                  },
                 ),
-                onTap: () {
-                  setState(() {
-                    _storesVisible = !_storesVisible; 
-                  });
-                  print('Las refTiendas (Mis Tiendas) son: '+refTiendas.toString());
-                },
               ),
 
               //----------------------------
               if (_storesVisible) ... [
-               Column(
-                children: myStores,
-               )
+                Column(
+                  children: myStores,
+                )
               ],
 
               //----------------------------
               const SizedBox(height: 20),
 
               // Botón de "Añadir tienda"
-              ListTile(
-                leading: const Icon(Icons.add_shopping_cart, color: Colors.blue),
-                title: const Text(
-                  'Añadir tienda',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.purple, 
+                    width: 2.0,
+                  ),
+                  borderRadius: BorderRadius.circular(10), 
                 ),
-                trailing: Icon(
-                  _isFormVisible ? Icons.expand_more : Icons.arrow_forward_ios,
-                  color: Colors.white,
+                child: ListTile(
+                  leading: const Icon(Icons.add_shopping_cart, color: Colors.blue),
+                  title: const Text(
+                    'Añadir tienda',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  trailing: Icon(
+                    _isFormVisible ? Icons.expand_more : Icons.arrow_forward_ios,
+                    color: Colors.white,
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _isFormVisible = !_isFormVisible; 
+                      _storesVisible = false;
+                    });
+                  },
                 ),
-                onTap: () {
-                  print('Las refTiendas (Añadir tienda) son: '+refTiendas.toString());
-                  setState(() {
-                    _isFormVisible = !_isFormVisible; 
-                  });
-                },
               ),
 
               // Formulario desplegable
@@ -455,14 +324,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 20),
                         TextFormField(
                           decoration: InputDecoration(
-                            labelText: 'Nombre de la tienda',
-                            labelStyle: const TextStyle(color: Color.fromARGB(255, 84, 178, 255)),
+                            labelText: 'Nombre de la tienda*',
+                            labelStyle: const TextStyle(color: Colors.cyanAccent),
                             border: InputBorder.none,
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.photo_camera, color: Colors.blue),
-                              onPressed: () {
-                              },
-                            ),
                           ),
                           style: TextStyle(
                             color: Colors.white,
@@ -475,12 +339,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: Colors.purple,
                           thickness: 2,
                         ),
-
+                        //---------------------------------------
                         const SizedBox(height: 20),
                         TextFormField(
                           decoration: InputDecoration(
-                            labelText: 'Ubicación',
-                            labelStyle: const TextStyle(color: Colors.blue),
+                            labelText: 'Ubicación*',
+                            labelStyle: const TextStyle(color:  Colors.cyanAccent),
                             border: InputBorder.none,
                           ),
                           style: TextStyle(
@@ -494,31 +358,133 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: Colors.purple,
                           thickness: 2,
                         ),
-
+                        //---------------------------------------
                         const SizedBox(height: 20),
-                        TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Medios de pago',
-                            labelStyle: const TextStyle(color: Colors.blue),
-                            border: InputBorder.none,
-                          ),
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                          onChanged: (String pagos) {
-                            getStorePayments(pagos);
-                          },
+                        Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: 
+                              Text(
+                                'Medios de pago (al menos uno)', 
+                                style: TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontSize: 16
+                                ),
+                              ),
+                            ),
+                            //----- Junaeb -----
+                            GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  _paymentsCheck['Junaeb'] = !_paymentsCheck['Junaeb']!;
+                                });                             
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _paymentsCheck['Junaeb'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                                      color: _paymentsCheck['Junaeb'] ?? false ? Colors.green : Colors.grey,
+                                      size: 40,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text('Junaeb', style: TextStyle(fontSize: 20, color: Colors.white),)
+                                  ],
+                                ),
+                              ),
+                            ),
+                            //----- Tarjeta -----
+                            GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  _paymentsCheck['Tarjeta'] = !_paymentsCheck['Tarjeta']!;
+                                });                             
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _paymentsCheck['Tarjeta'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                                      color: _paymentsCheck['Tarjeta'] ?? false ? Colors.green : Colors.grey,
+                                      size: 40,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text('Tarjeta', style: TextStyle(fontSize: 20, color: Colors.white),)
+                                  ],
+                                ),
+                              ),
+                            ),
+                            //----- Efectivo -----
+                            GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  _paymentsCheck['Efectivo'] = !_paymentsCheck['Efectivo']!;
+                                });                             
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _paymentsCheck['Efectivo'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                                      color: _paymentsCheck['Efectivo'] ?? false ? Colors.green : Colors.grey,
+                                      size: 40,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text('Efectivo', style: TextStyle(fontSize: 20, color: Colors.white),)
+                                  ],
+                                ),
+                              ),
+                            ),
+                            //----- Transferencia -----
+                            GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  _paymentsCheck['Transferencia'] = !_paymentsCheck['Transferencia']!;
+                                });                             
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _paymentsCheck['Transferencia'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                                      color: _paymentsCheck['Transferencia'] ?? false ? Colors.green : Colors.grey,
+                                      size: 40,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text('Transferencia', style: TextStyle(fontSize: 20, color: Colors.white),)
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const Divider(
                           color: Colors.purple,
                           thickness: 2,
                         ),
-
+                        //---------------------------------------
                         const SizedBox(height: 20),
                         TextFormField(
                           decoration: InputDecoration(
-                            labelText: 'Horario',
-                            labelStyle: const TextStyle(color: Colors.blue),
+                            labelText: 'Horario*',
+                            labelStyle: const TextStyle(color:  Colors.cyanAccent),
                             border: InputBorder.none,
                           ),
                           style: TextStyle(
@@ -532,12 +498,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: Colors.purple,
                           thickness: 2,
                         ),
-
+                        //---------------------------------------
                         const SizedBox(height: 20),
                         TextFormField(
                           decoration: InputDecoration(
-                            labelText: 'Contacto',
-                            labelStyle: const TextStyle(color: Colors.blue),
+                            labelText: 'Contacto*',
+                            labelStyle: const TextStyle(color:  Colors.cyanAccent),
                             border: InputBorder.none,
                           ),
                           style: TextStyle(
@@ -551,11 +517,62 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: Colors.purple,
                           thickness: 2,
                         ),
+                        //---------------------------------------
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Foto de tu tienda (opcional):',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  color: Colors.cyanAccent, 
+                                ),
+                                textAlign: TextAlign.left, 
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            GestureDetector(
+                              onTap: () {
+                                print('Aquí puedes añadir una imagen para tu tienda');
+                              },
+                              child: Container(
+                                width: 75,
+                                height: 75,
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.purple),
+                                ),
+                                child: Icon(Icons.add_a_photo, size: 30, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(
+                          color: Colors.purple,
+                          thickness: 2,
+                        ),
+                        //---------------------------------------
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 20.0, bottom: 30.0), 
+                            child: Text(
+                              'Productos',
+                              style: TextStyle(
+                                fontSize: 24, 
+                                fontWeight: FontWeight.bold, 
+                                color: Colors.white, 
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
                         
                         // Formularios de productos
                         Column(children: _productForms),
 
-                        // Botón para añadir más productos
+                        //------ Botón para añadir más productos -----
                         ElevatedButton.icon(
                           onPressed: () {
                             _addProductForm();
@@ -568,9 +585,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Botón para registrar la tienda
+                        //------ Botón para registrar la tienda ------
                         ElevatedButton(
                           onPressed: () {
+                            _collectProductInfo();
                             createData();
                             setState(() {
                               _isFormVisible = !_isFormVisible; 
@@ -581,7 +599,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color.fromARGB(255, 123, 21, 141),
-                            padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+                            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                           ),
                           child: const Text(
                             'Registrar tienda',
@@ -604,16 +622,20 @@ class _ProfilePageState extends State<ProfilePage> {
 //----------------------------------------------------
 
 class StoreEdit extends StatefulWidget {
+  final String usrID;
+  final String storeID;
   final String storeName;
   final IconData iconData;
   final String location;
-  final String payments;
+  final Map<String, bool> payments;
   final String time;
   final String contact;
   final List<dynamic> products;
 
   const StoreEdit({
     Key? key,
+    required this.usrID,
+    required this.storeID,
     required this.storeName,
     required this.iconData,
     required this.location,
@@ -659,6 +681,8 @@ class _StoreEditState extends State<StoreEdit> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditingStore(
+                    idUser: widget.usrID,
+                    storeID: widget.storeID,
                     storeName: widget.storeName, 
                     iconData: widget.iconData,
                     location: widget.location,
@@ -673,6 +697,172 @@ class _StoreEditState extends State<StoreEdit> {
           ),
         ],
       ),
+    );
+  }
+}
+
+//--------------------------------------------------
+
+class ProductForm extends StatefulWidget {
+  final int idW;
+  final Function onDelete;
+  final GlobalKey<_ProductFormState> formKey; 
+
+  ProductForm({required this.idW, required this.onDelete, required this.formKey}) : super(key: formKey);
+
+  @override
+  _ProductFormState createState() => _ProductFormState();
+}
+
+class _ProductFormState extends State<ProductForm> {
+  bool isToggled = true;
+  Map<String, dynamic> productInfo = {};
+
+  @override
+  void initState() {
+    super.initState();
+    productInfo = {
+      'idM': widget.idW,
+      'nombreP': '',
+      'precio': '',
+      'descripcion': '',
+      'stock': isToggled,
+    };
+  }
+
+  // Método para obtener la información del producto
+  Map<String, dynamic> getProductInfo() {
+    return productInfo;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: ValueKey(widget.idW),
+      children: [
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Container(
+              width: 122,
+              height: 122,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: Colors.grey),
+              ),
+              child: GestureDetector(
+                onTap: () {
+                  print('Aquí podrás añadir una foto para tu tienda');
+                },
+                child: Icon(Icons.add_a_photo, size: 40, color: Colors.cyanAccent),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                children: [
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Nombre producto*',
+                      labelStyle: const TextStyle(color: Colors.cyanAccent),
+                      border: OutlineInputBorder(),
+                      fillColor: Colors.black,
+                      filled: true,
+                    ),
+                    style: TextStyle(color: Colors.white),
+                    onChanged: (String nameP) {
+                      setState(() {
+                        productInfo['nombreP'] = nameP;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Precio* \$\$\$',
+                      labelStyle: const TextStyle(color: Colors.cyanAccent),
+                      border: OutlineInputBorder(),
+                      fillColor: Colors.black,
+                      filled: true,
+                    ),
+                    style: TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.number,
+                    onChanged: (String precioP) {
+                      setState(() {
+                        productInfo['precio'] = precioP;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          decoration: InputDecoration(
+            labelText: 'Agregar descripción del producto',
+            labelStyle: const TextStyle(color: Colors.cyanAccent),
+            border: OutlineInputBorder(),
+            fillColor: Colors.black,
+            filled: true,
+          ),
+          style: TextStyle(color: Colors.white),
+          onChanged: (String descripcionP) {
+            setState(() {
+              productInfo['descripcion'] = descripcionP;
+            });
+          },
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  isToggled = !isToggled;
+                  productInfo['stock'] = isToggled;
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      isToggled ? Icons.toggle_on : Icons.toggle_off,
+                      color: isToggled ? Colors.green : Colors.grey,
+                      size: 40,
+                    ),
+                    SizedBox(width: 10),
+                    Text('Stock', style: TextStyle(fontSize: 20, color: Colors.white)),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: Colors.red),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  widget.onDelete(widget.idW); 
+                },
+              ),
+            ),
+          ],
+        ),
+        const Divider(
+          color: Colors.purple,
+          thickness: 2,
+        ),
+      ],
     );
   }
 }

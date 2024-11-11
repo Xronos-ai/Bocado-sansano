@@ -9,71 +9,113 @@ class StoreListPage extends StatefulWidget {
 class _StoreListPageState extends State<StoreListPage> {
  
   // Widget para construir la carta de un producto
-  Widget _buildProductView(String productName, String precio, String descripcion) {
+  Widget _buildProductView(String productName, String precio, String descripcion, bool stock) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0), // Añadir espaciado entre productos
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icono de producto (puedes cambiar a otro si es necesario)
-              const Icon(
-                Icons.lunch_dining, 
-                color: Colors.white, 
-                size: 40, // Ajustar tamaño del icono
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 5.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border.all(color: Colors.purpleAccent, width: 2.0),
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //--- Nombre ---
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(1), 
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
               ),
-              const SizedBox(width: 10), // Espacio entre el icono y el texto
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Text(
+                productName,
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20.0),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Icono
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.cyanAccent, width: 2.0),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.image, 
+                      size: 40.0,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+
+                Column(
                   children: [
-                    // Primera fila con el nombre del producto y el precio alineado a la derecha
+                    //--- Precio ---
+                    Text(
+                      '\$$precio',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.cyanAccent,
+                      ),
+                    ),
+                    const Divider(color: Colors.purple, thickness: 4),
+                    //--- Stock ---
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Nombre del producto
-                        Text(
-                          productName,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        Icon(
+                          stock ? Icons.circle : Icons.circle_outlined,
+                          color: stock ? Colors.green : Colors.red,
+                          size: 15,
                         ),
-                        // Precio del producto
+                        SizedBox(width: 10.0),
                         Text(
-                          '\$$precio',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.cyanAccent,
+                          stock ? 'Disponible' : 'Sin stock',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 5), // Espacio entre el nombre y la descripción
-                    // Descripción del producto
-                    Text(
-                      descripcion,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                    ),
                   ],
                 ),
+              ],
+            ),
+
+            SizedBox(height: 20.0),
+
+            //--- Descripción ---
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(8.0), // Espaciado interno para que el texto no toque el borde
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.cyanAccent, width: 2.0), // Borde cian
+                borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
               ),
-            ],
-          ),
-          const SizedBox(height: 10), // Espacio antes del divisor
-          // Divider púrpura entre productos
-          const Divider(
-            color: Colors.purple,
-            thickness: 2,
-          ),
-        ],
+              child: Text(
+                'Descripción: \n'+descripcion,
+                style: TextStyle(
+                  fontSize: 16.0,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -85,9 +127,17 @@ class _StoreListPageState extends State<StoreListPage> {
     List<Widget> productsView = [];
     for (var item in productsMaps){
       Map<String, dynamic> mapa = item as Map<String, dynamic>;
-      productsView.add(_buildProductView(mapa['nombreP'], mapa['precio'], mapa['descripcion']));
+      productsView.add(_buildProductView(mapa['nombreP'], mapa['precio'], mapa['descripcion'], mapa['stock']));
     }
     return productsView;
+  }
+
+  // función que transforma un mapa <String, dynamic> a uno <String, bool>
+  Map<String, bool> _dynamicToBool (Map<String, dynamic> mapaDinamico){
+    Map<String, bool> pagosBool = mapaDinamico.map((key, value) {
+      return MapEntry(key, value as bool); // Hacemos el casting de 'dynamic' a 'bool'
+    });
+    return pagosBool;
   }
 
   void _searchStore(String query) {
@@ -100,6 +150,7 @@ class _StoreListPageState extends State<StoreListPage> {
     return Scaffold(
       backgroundColor: Colors.black87,
       appBar: AppBar(
+        automaticallyImplyLeading: false, 
         backgroundColor: Colors.black87,
         elevation: 0,
         title: Container(
@@ -160,7 +211,7 @@ class _StoreListPageState extends State<StoreListPage> {
                       storeName: snapshot.data!.docs[index].data()['nombre'],
                       iconData: Icons.restaurant,
                       location: snapshot.data!.docs[index].data()['ubicacion'],
-                      payments: snapshot.data!.docs[index].data()['pagos'],
+                      payments: _dynamicToBool(snapshot.data!.docs[index].data()['pagos']),
                       time: snapshot.data!.docs[index].data()['horario'],
                       contact: snapshot.data!.docs[index].data()['contacto'],
                       products: _listarProductos(snapshot.data!.docs[index].data()['productos']),
@@ -182,7 +233,7 @@ class StoreTile extends StatefulWidget {
   final String storeName;
   final IconData iconData;
   final String location;
-  final String payments;
+  final Map<String, bool> payments;
   final String time;
   final String contact;
   final List<Widget> products;
@@ -210,7 +261,7 @@ class _StoreTileState extends State<StoreTile> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.purple),
       ),
@@ -218,7 +269,17 @@ class _StoreTileState extends State<StoreTile> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           ListTile(
-            leading: Icon(widget.iconData, color: Colors.white),
+            leading: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: Colors.cyanAccent),
+              ),
+              child: Icon(Icons.restaurant, size: 30, color: Colors.white,) //Aquí va la foto de la tienda
+            ),
+            
             title: Text(
               widget.storeName,
               style: const TextStyle(
@@ -256,16 +317,90 @@ class _StoreTileState extends State<StoreTile> {
             const SizedBox(height: 10),
             const Divider(color: Colors.purple, thickness: 2),
 
-            Row(
+            Column(
               children: [
-                Text(
-                  'Medios de pago: ',
-                  style: const TextStyle(color: Colors.cyanAccent),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: 
+                  Text(
+                    'Medios de pago aceptados', 
+                    style: TextStyle(
+                      color: Colors.cyanAccent,
+                      fontSize: 15
+                    ),
+                  ),
                 ),
-                Text(
-                  widget.payments,
-                  style: const TextStyle(color: Colors.white),
-                  softWrap: true,
+                //----- Junaeb -----
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.payments['Junaeb'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                        color: widget.payments['Junaeb'] ?? false ? Colors.green : Colors.grey,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Junaeb', style: TextStyle(fontSize: 15, color: Colors.white),)
+                    ],
+                  ),
+                ),
+                //----- Tarjeta -----
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.payments['Tarjeta'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                        color: widget.payments['Tarjeta'] ?? false ? Colors.green : Colors.grey,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Tarjeta', style: TextStyle(fontSize: 15, color: Colors.white),)
+                    ],
+                  ),
+                ),
+                //----- Efectivo -----
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.payments['Efectivo'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                        color: widget.payments['Efectivo'] ?? false ? Colors.green : Colors.grey,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Efectivo', style: TextStyle(fontSize: 15, color: Colors.white),)
+                    ],
+                  ),
+                ),
+                //----- Transferencia -----
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.payments['Transferencia'] ?? false ? Icons.toggle_on : Icons.toggle_off,
+                        color: widget.payments['Transferencia'] ?? false ? Colors.green : Colors.grey,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Transferencia', style: TextStyle(fontSize: 15, color: Colors.white),)
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -304,9 +439,149 @@ class _StoreTileState extends State<StoreTile> {
             const SizedBox(height: 10),
             const Divider(color: Colors.purple, thickness: 2),
 
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20.0, bottom: 30.0), 
+                child: Text(
+                  'Productos',
+                  style: TextStyle(
+                    fontSize: 24, 
+                    fontWeight: FontWeight.bold, 
+                    color: Colors.white, 
+                  ),
+                  textAlign: TextAlign.center, 
+                ),
+              ),
+            ),
+
             Column(children: widget.products,)
           ]
         ],
+      ),
+    );
+  }
+}
+
+//-----------------------------------------------
+
+class ProductForm extends StatefulWidget {
+  final String pName;
+  final String pPrice; 
+  final String pDesc;
+  final bool stck;
+  final GlobalKey<_ProductFormState> formKey;
+
+  ProductForm({
+    required this.pName,
+    required this.pPrice,
+    required this.pDesc,
+    required this.stck,
+    required this.formKey
+  }) : super(key: formKey);
+
+  @override
+  _ProductFormState createState() => _ProductFormState();
+}
+
+class _ProductFormState extends State<ProductForm> {
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(10.0),
+          border: Border.all(color: Colors.cyanAccent, width: 2.0),
+        ),
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //--- Nombre ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  widget.pName,
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 20.0),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Icono
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.cyanAccent, width: 2.0),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.image, 
+                      size: 40.0,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+
+                Column(
+                  children: [
+                    //--- Precio ---
+                    Text(
+                      '\$'+widget.pPrice,
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.cyanAccent,
+                      ),
+                    ),
+                    //--- Stock ---
+                    Row(
+                      children: [
+                        Icon(
+                          widget.stck ? Icons.circle : Icons.circle_outlined,
+                          color: widget.stck ? Colors.green : Colors.red,
+                          size: 30.0,
+                        ),
+                        SizedBox(width: 10.0),
+                        Text(
+                          widget.stck ? 'Disponible' : 'Sin stock',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            SizedBox(height: 20.0),
+
+            //--- Descripción ---
+            Text(
+              widget.pDesc,
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

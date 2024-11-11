@@ -32,37 +32,55 @@ class _MainscreenState extends State<Mainscreen> {
     else {
       userScreen = LoginPage();
     }
-    
+
     final screens = [StoreListPage(), userScreen];
-    
+
     return Scaffold(
-      backgroundColor: Colors.black87,
-      body: 
-      IndexedStack(
-        index: indexseleccionado,
-        children: screens,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.cyanAccent,
-        unselectedItemColor: Colors.white,
-        currentIndex: indexseleccionado,
-        onTap: (neoindex){
-          setState(() {
-            indexseleccionado = neoindex; 
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: 'Tiendas', 
+      body: Stack(
+        children: [
+          // Imagen de fondo
+          Positioned.fill(
+            child: Image.asset(
+              'assets/wallp_fondo.jpg',
+              fit: BoxFit.cover, // Ajusta la imagen al tamaño de la pantalla
+              color: Colors.transparent, // Ajusta la opacidad
+              colorBlendMode: BlendMode.luminosity, // Mezcla el color para oscurecer la imagen
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
+          // Contenido de la app
+          Column(
+            children: [
+              Expanded(
+                child: IndexedStack(
+                  index: indexseleccionado,
+                  children: screens,
+                ),
+              ),
+              BottomNavigationBar(
+                backgroundColor: Colors.black,
+                selectedItemColor: Colors.cyanAccent,
+                unselectedItemColor: Colors.white,
+                currentIndex: indexseleccionado,
+                onTap: (neoindex) {
+                  setState(() {
+                    indexseleccionado = neoindex; 
+                  });
+                },
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.store),
+                    label: 'Tiendas', 
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person),
+                    label: 'Perfil',
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
-      );
+    );
   }
 }

@@ -11,12 +11,13 @@ class _StoreListPageState extends State<StoreListPage> {
   // Widget para construir la carta de un producto
   Widget _buildProductView(String productName, String precio, String descripcion, bool stock) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 5.0),
+      padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.transparent,
-          border: Border.all(color: Colors.purpleAccent, width: 2.0),
-          borderRadius: BorderRadius.circular(10.0),
+          border: Border(
+            bottom: BorderSide(color: Colors.blueAccent, width: 1.5),
+          ),
         ),
         padding: const EdgeInsets.all(15.0),
         child: Column(
@@ -27,14 +28,18 @@ class _StoreListPageState extends State<StoreListPage> {
               width: double.infinity,
               padding: EdgeInsets.all(1), 
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(8.0), 
+                border: Border.all(color: Colors.cyanAccent, width: 2),// Bordes redondeados
               ),
-              child: Text(
-                productName,
-                style: TextStyle(
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              child: Center(
+                child: Text(
+                  productName,
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -49,7 +54,7 @@ class _StoreListPageState extends State<StoreListPage> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.black87,
                     borderRadius: BorderRadius.circular(8.0),
                     border: Border.all(color: Colors.cyanAccent, width: 2.0),
                   ),
@@ -57,41 +62,66 @@ class _StoreListPageState extends State<StoreListPage> {
                     child: Icon(
                       Icons.image, 
                       size: 40.0,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ),
                 ),
 
-                Column(
-                  children: [
-                    //--- Precio ---
-                    Text(
-                      '\$$precio',
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        color: Colors.cyanAccent,
-                      ),
-                    ),
-                    const Divider(color: Colors.purple, thickness: 4),
-                    //--- Stock ---
-                    Row(
-                      children: [
-                        Icon(
-                          stock ? Icons.circle : Icons.circle_outlined,
-                          color: stock ? Colors.green : Colors.red,
-                          size: 15,
+                const SizedBox(width: 20,),
+                
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      //--- Precio ---
+                      Container(
+                        padding: EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.circular(8.0),
+                          border: Border.all(color: Colors.cyanAccent, width: 2.0),
                         ),
-                        SizedBox(width: 10.0),
-                        Text(
-                          stock ? 'Disponible' : 'Sin stock',
+                        child: Text(
+                          '\$$precio',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 18.0,
                             color: Colors.white,
                           ),
+                          textAlign: TextAlign.center,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+
+                      SizedBox(height: 10.0),
+
+                      //--- Stock ---
+                      Container(
+                        padding: EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.circular(8.0),
+                          border: Border.all(color: Colors.cyanAccent, width: 2.0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              stock ? Icons.circle : Icons.circle_outlined,
+                              color: stock ? Colors.green : Colors.red,
+                              size: 15,
+                            ),
+                            SizedBox(width: 10.0),
+                            Text(
+                              stock ? 'Disponible' : 'Sin stock',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -103,6 +133,7 @@ class _StoreListPageState extends State<StoreListPage> {
               width: double.infinity,
               padding: EdgeInsets.all(8.0), // Espaciado interno para que el texto no toque el borde
               decoration: BoxDecoration(
+                color: Colors.black87,
                 border: Border.all(color: Colors.cyanAccent, width: 2.0), // Borde cian
                 borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
               ),
@@ -156,7 +187,7 @@ class _StoreListPageState extends State<StoreListPage> {
         title: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            color: Colors.grey[800],
+            color: const Color.fromARGB(255, 109, 108, 108),
             borderRadius: BorderRadius.circular(30),
           ),
           
@@ -172,13 +203,13 @@ class _StoreListPageState extends State<StoreListPage> {
                   },
                   decoration: const InputDecoration(
                     hintText: 'Search',
-                    hintStyle: TextStyle(color: Colors.grey),
+                    hintStyle: TextStyle(color: Color.fromARGB(255, 201, 199, 199)),
                     border: InputBorder.none,
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.search, color: Colors.purple),
+                icon: const Icon(Icons.search, color: Colors.cyanAccent),
                 onPressed: () {
                 },
               ),
@@ -263,7 +294,7 @@ class _StoreTileState extends State<StoreTile> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.purple),
+        border: Border.all(color: Colors.purpleAccent, width: 2),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -299,7 +330,7 @@ class _StoreTileState extends State<StoreTile> {
             },
           ),
           if (forminfo) ...[
-            const Divider(color: Colors.purple, thickness: 2),
+            const Divider(color: Colors.white, thickness: 3),
 
             Row(
               children: [
@@ -437,7 +468,7 @@ class _StoreTileState extends State<StoreTile> {
               ],
             ),
             const SizedBox(height: 10),
-            const Divider(color: Colors.purple, thickness: 2),
+            const Divider(color: Colors.white, thickness: 4),
 
             Center(
               child: Padding(

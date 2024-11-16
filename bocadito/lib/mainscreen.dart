@@ -2,20 +2,39 @@ import 'package:flutter/material.dart';
 import 'profile_view.dart';
 import 'signup_view.dart';
 import 'login_view.dart';
-import 'gonza.dart';
 import 'storelist.dart';
+import 'map_view.dart';
 
 class Mainscreen extends StatefulWidget {
   final int loged;
   final String userID;
-  const Mainscreen({super.key, required this.loged, required this.userID});
+  final int initialIndex;
+  final double lati;
+  final double long;
+  final bool actvMark;
+
+  const Mainscreen({
+    super.key, 
+    required this.loged, 
+    required this.userID,
+    this.initialIndex = 2,
+    this.lati = -33.0353043,
+    this.long = -71.5956004,
+    this.actvMark = false,
+  });
 
   @override
   State<Mainscreen> createState() => _MainscreenState();
 }
 
 class _MainscreenState extends State<Mainscreen> {
-  int indexseleccionado = 1; 
+  late int indexseleccionado; 
+
+  @override
+  void initState() {
+    super.initState();
+    indexseleccionado = widget.initialIndex; // Inicializar con el valor recibido
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +52,7 @@ class _MainscreenState extends State<Mainscreen> {
       userScreen = LoginPage();
     }
 
-    final screens = [StoreListPage(), userScreen];
+    final screens = [StoreListPage(), MapView(lati: widget.lati, long: widget.long, actvMark: widget.actvMark,), userScreen];
 
     return Scaffold(
       body: Stack(
@@ -70,6 +89,10 @@ class _MainscreenState extends State<Mainscreen> {
                   BottomNavigationBarItem(
                     icon: Icon(Icons.store),
                     label: 'Tiendas', 
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.map_outlined),
+                    label: 'Mapa', 
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.person),

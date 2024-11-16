@@ -130,7 +130,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => Mainscreen(loged: 0, userID: '',)
+                            builder: (context) => Mainscreen(loged: 0, userID: '')
                           ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -163,7 +163,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Mainscreen(loged: 0, userID: '',)
+                        builder: (context) => Mainscreen(loged: 0, userID: '')
                       ),
                     );
                   },

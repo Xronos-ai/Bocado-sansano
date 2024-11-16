@@ -1,7 +1,11 @@
+import 'package:bocadito/login_view.dart';
 import 'package:bocadito/mainscreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'edit_view.dart';
+import 'set_location.dart';
+import 'package:provider/provider.dart';
+import 'package:bocadito/providers/user_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   final String idUsuario;
@@ -26,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
   List<String> refTiendas = []; // Lista de referencias de las tiendas del usuario
   List<Widget> myStores = [];
   List<ProductForm> _productForms = [];
+  bool mapSaved = false;
 
   @override
   void initState() {
@@ -96,6 +101,8 @@ class _ProfilePageState extends State<ProfilePage> {
             time: tiendaData['horario'],
             contact: tiendaData['contacto'],
             products: tiendaData['productos'],
+            lat: tiendaData['latitud'],
+            lon: tiendaData['longitud'],
           ),
         );
         indx++;
@@ -141,6 +148,8 @@ class _ProfilePageState extends State<ProfilePage> {
   //------ Espacio para el CRUD y las variables ------
   String storeName = '', storePayments = '', 
   storeHours = '', storeLocation = '', storeContact = '';
+
+  double lat = 1, lon = 1;
   
   // --------- Zona Tiendas ----------- 
   getStoreName(name){
@@ -153,6 +162,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   getStoreLocation(ubicacion){
     storeLocation = ubicacion;
+  }
+
+  getStoreLatitude(latitud){
+    lat = latitud;
+  }
+  getStoreLongitud(longitud){
+    lon = longitud;
   }
 
   getStoreHours(horario){
@@ -171,20 +187,16 @@ class _ProfilePageState extends State<ProfilePage> {
       'ubicacion': storeLocation,
       'horario': storeHours,
       'contacto': storeContact,
-      'productos': _productMaps
+      'productos': _productMaps,
+      'latitud': lat,
+      'longitud': lon,
     };
-
-    // Añadimos la tienda a firestore en la colección 'tiendas' que contiene la información del mapa 'stores'
     DocumentReference docstore = await FirebaseFirestore.instance.collection('tiendas').add(stores);
 
     // A refTiendas (lista con los id de las tiendas de este usuario) le añadimos
     // el id de la nueva tienda creada
     refTiendas.add(docstore.id);
     myStores = await storesBuilder();
-
-    print('El id de referencia de '+storeName+' es: '+docstore.id);
-    print(refTiendas);
-    print('idUsuario: '+widget.idUsuario);
 
     // Actualizamos el documento del usuario con el array actualizado
     await FirebaseFirestore.instance.collection('usuarios').doc(widget.idUsuario).set({
@@ -197,7 +209,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87, 
+      backgroundColor: const Color.fromARGB(200, 0, 0, 0), 
       body: 
       Center(
         child: Padding(
@@ -235,10 +247,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     icon: const Icon(Icons.logout, color: Colors.cyanAccent),
                     onPressed: () {
                       // Acción para cerrar sesión
+                      context.read<UserProvider>().changeIDuser(newiDuser: '');
+                      context.read<UserProvider>().changeLoged(newloged: 0);
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => Mainscreen(loged: 0, userID: '',)
+                          builder: (context) => Mainscreen(loged: 0, userID: '')
                         ),
                       );
                     },
@@ -343,7 +357,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 20),
                         TextFormField(
                           decoration: InputDecoration(
-                            labelText: 'Ubicación*',
+                            labelText: 'Dirección*',
                             labelStyle: const TextStyle(color:  Colors.cyanAccent),
                             border: InputBorder.none,
                           ),
@@ -359,7 +373,79 @@ class _ProfilePageState extends State<ProfilePage> {
                           thickness: 2,
                         ),
                         //---------------------------------------
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 10),
+                        /*
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: GestureDetector(
+                            onTap: () async {
+                              final List<double> resultado = await Navigator.push(
+                                context, 
+                                MaterialPageRoute(builder: (context) => SetLocation(lati: -33.0353043, longi: -71.5956004,))
+                              );
+                              getStoreLatitude(resultado[0]);
+                              getStoreLongitud(resultado[1]);
+                              mapSaved = true;
+                              
+                            },
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                              ),
+                              child: Expanded(
+                                child: Row(
+                                  children: [
+                                    Text('Ubicar tienda en el mapa', 
+                                    style: TextStyle(
+                                      color: Colors.cyanAccent,
+                                      fontSize: 16
+                                    ),),
+                                    Icon(
+                                      Icons.add_location, 
+                                      color: mapSaved ? Colors.cyanAccent : Colors.redAccent,
+                                    ),
+                                  ],
+                                )
+                              )
+                            ),
+                          ),
+                        ),
+                        */
+                        //------------------------------------
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Ubicar tienda en el mapa', style: TextStyle(color: Colors.cyanAccent),),
+                            Container(
+                              width: 45,
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(color: mapSaved ? Colors.purpleAccent : Colors.red, width: 2),
+                              ),
+                              child: IconButton(
+                                icon: Icon(Icons.location_on, color: mapSaved ? Colors.cyanAccent : Colors.redAccent,),
+                                onPressed: () async {
+                                  final List<double> resultado = await Navigator.push(
+                                    context, 
+                                    MaterialPageRoute(builder: (context) => SetLocation(lati: -33.0353043, longi: -71.5956004,))
+                                  );
+                                  getStoreLatitude(resultado[0]);
+                                  getStoreLongitud(resultado[1]);
+                                  mapSaved = true;
+                                },
+                              )
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        
+                        const Divider(color: Colors.purple, thickness: 2,),
+                        //---------------------------------------
+                        const SizedBox(height: 10),
                         Column(
                           children: [
                             Align(
@@ -509,6 +595,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           style: TextStyle(
                             color: Colors.white,
                           ),
+                          keyboardType: TextInputType.number,
                           onChanged: (String contacto) {
                             getStoreContact(contacto);
                           },
@@ -631,6 +718,8 @@ class StoreEdit extends StatefulWidget {
   final String time;
   final String contact;
   final List<dynamic> products;
+  final double lat;
+  final double lon;
 
   const StoreEdit({
     Key? key,
@@ -642,7 +731,9 @@ class StoreEdit extends StatefulWidget {
     required this.payments,
     required this.time,
     required this.contact,
-    required this.products
+    required this.products,
+    required this.lat,
+    required this.lon,
   }) : super(key: key);
 
   @override
@@ -690,6 +781,8 @@ class _StoreEditState extends State<StoreEdit> {
                     time: widget.time,
                     contact: widget.contact,
                     products: widget.products,
+                    latit: widget.lat,
+                    longit: widget.lon,
                   )
                 ),
               );

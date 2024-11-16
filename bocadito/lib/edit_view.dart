@@ -1,4 +1,5 @@
 import 'package:bocadito/mainscreen.dart';
+import 'package:bocadito/set_location.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -12,6 +13,8 @@ class EditingStore extends StatefulWidget {
   final String time;
   final String contact;
   final List<dynamic> products;
+  final double latit;
+  final double longit;
 
   const EditingStore({
     Key? key,
@@ -23,7 +26,9 @@ class EditingStore extends StatefulWidget {
     required this.payments,
     required this.time,
     required this.contact,
-    required this.products
+    required this.products,
+    required this.latit,
+    required this.longit,
   }) : super(key: key);
 
   @override
@@ -45,6 +50,10 @@ class _EditingStoreState extends State<EditingStore> {
     'Transferencia': false,
   };
   int idWP = 0;
+  double lat = -33.0353043;
+  double lon = -71.5956004;
+  bool mapSaved = false;
+  List<String> refTiendas = [];
 
   @override
   void initState() {
@@ -58,6 +67,10 @@ class _EditingStoreState extends State<EditingStore> {
     getStoreLocation(widget.location);
     getStoreHours(widget.time);
     getStoreContact(widget.contact);
+    getStoreLatitude(widget.latit);
+    getStoreLongitud(widget.longit);
+    print('lat edit1 : '+lat.toString());
+    print('lon edit2: '+lon.toString());
   }
 
   void _initializeProducts(){
@@ -137,6 +150,14 @@ class _EditingStoreState extends State<EditingStore> {
     storeContact = contacto;
   }
 
+  getStoreLatitude(latitud){
+    lat = latitud;
+  }
+
+  getStoreLongitud(longitud){
+    lon = longitud;
+  }
+
   // Función para updateData()
   Future<void> updateData() async {
     Map<String, dynamic> storeUp = {
@@ -145,10 +166,83 @@ class _EditingStoreState extends State<EditingStore> {
       'ubicacion': storeLocation,
       'horario': storeHours,
       'contacto': storeContact,
-      'productos': _productMapsList
+      'productos': _productMapsList,
+      'latitud': lat,
+      'longitud': lon,
     };
 
+    print('lat/latitud mapUp3: '+storeUp['latitud'].toString());
+    print('lon/longitud mapUp3: '+storeUp['longitud'].toString());
+
     await FirebaseFirestore.instance.collection('tiendas').doc(widget.storeID).set(storeUp);
+  }
+
+  Future<List<String>> obtenerTiendas() async{
+    List<String> misTiendas = [];
+    DocumentReference documentReference = FirebaseFirestore.instance.collection('usuarios').doc(widget.idUser);
+    //-----------------------------
+    try {
+      // Obtener el documento desde Firestore
+      DocumentSnapshot documentSnapshot = await documentReference.get();
+
+      // Verificar si el documento existe
+      if (documentSnapshot.exists) {
+        // Obtener el campo 'misTiendas', que es una lista de strings
+        misTiendas = List<String>.from(documentSnapshot.get('misTiendas'));
+      } else {
+        print('El documento no existe');
+      }
+    } catch (e) {
+      print('Error al obtener el documento: $e');
+    }
+    return misTiendas;
+    //-----------------------------
+  }
+
+  // Función para deleteData()
+  Future<void> deleteStore() async {
+    refTiendas = await obtenerTiendas();
+    refTiendas.remove(widget.storeID);
+    await FirebaseFirestore.instance.collection('usuarios').doc(widget.idUser).set({
+      'misTiendas': refTiendas
+    });
+    await FirebaseFirestore.instance.collection('tiendas').doc(widget.storeID).delete();
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Borrar Tienda'),
+          content: const Text('¿Seguro que quieres borrar esta tienda?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await deleteStore();
+                Navigator.of(context).pop(); // Cerramos el diálogo
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Mainscreen(loged: 1, userID: widget.idUser)
+                  ),
+                );
+              },
+              child: const Text(
+                'Borrar',
+                style: TextStyle(color: Colors.red),  // Color del botón "Borrar"
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -225,7 +319,7 @@ class _EditingStoreState extends State<EditingStore> {
                   TextFormField(
                     controller: locationS,
                     decoration: InputDecoration(
-                      labelText: 'Ubicación:',
+                      labelText: 'Dirección:',
                       labelStyle: TextStyle(color: Colors.cyanAccent),
                       enabledBorder: UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.purple),
@@ -239,6 +333,39 @@ class _EditingStoreState extends State<EditingStore> {
                       getStoreLocation(ubicacion);
                     },
                   ),
+                  //-----------------------------------------
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Ubicar tienda en el mapa', style: TextStyle(color: Colors.cyanAccent),),
+                      Container(
+                        width: 45,
+                        height: 45,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(color: Colors.red, width: 2),
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.location_on, color: Colors.redAccent,),
+                          onPressed: () async {
+                            final resultado = await Navigator.push(
+                              context, 
+                              MaterialPageRoute(builder: (context) => SetLocation(lati: lat, longi: lon,))
+                            );
+                            getStoreLatitude(resultado[0]);
+                            getStoreLongitud(resultado[1]);
+                            mapSaved = true;
+                            print('lat saved2: '+lat.toString());
+                            print('lon saved2: '+lon.toString());
+                          },
+                        )
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Divider(color: Colors.purple, thickness: 2),
                   //-----------------------------------------
                   Column(
                     children: [
@@ -391,6 +518,7 @@ class _EditingStoreState extends State<EditingStore> {
                       ),
                     ),
                     style: TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.number,
                     onChanged: (String contacto) {
                       getStoreContact(contacto);
                     },
@@ -472,10 +600,10 @@ class _EditingStoreState extends State<EditingStore> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          // Acción para borrar la tienda
+                          _showDeleteConfirmationDialog(context); // Acción para borrar la tienda
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red, // Color del botón
+                          backgroundColor: Colors.red, 
                           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         ),
                         child: Text(
@@ -486,12 +614,11 @@ class _EditingStoreState extends State<EditingStore> {
                       ElevatedButton(
                         onPressed: () async {
                           _collectProductInfo();
-                          // Acción para guardar la tienda
                           await updateData();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => Mainscreen(loged: 1, userID: widget.idUser,)
+                              builder: (context) => Mainscreen(loged: 1, userID: widget.idUser)
                             ),
                           );
                         },

@@ -1,5 +1,8 @@
+import 'package:bocadito/mainscreen.dart';
+import 'package:bocadito/providers/user_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class StoreListPage extends StatefulWidget {
   @override
@@ -56,7 +59,7 @@ class _StoreListPageState extends State<StoreListPage> {
                   decoration: BoxDecoration(
                     color: Colors.black87,
                     borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: Colors.cyanAccent, width: 2.0),
+                    border: Border.all(color: const Color.fromARGB(144, 24, 255, 255) , width: 2.0),
                   ),
                   child: Center(
                     child: Icon(
@@ -79,7 +82,7 @@ class _StoreListPageState extends State<StoreListPage> {
                         decoration: BoxDecoration(
                           color: Colors.black87,
                           borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(color: Colors.cyanAccent, width: 2.0),
+                          border: Border.all(color: const Color.fromARGB(144, 24, 255, 255) , width: 2.0),
                         ),
                         child: Text(
                           '\$$precio',
@@ -99,15 +102,15 @@ class _StoreListPageState extends State<StoreListPage> {
                         decoration: BoxDecoration(
                           color: Colors.black87,
                           borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(color: Colors.cyanAccent, width: 2.0),
+                          border: Border.all(color: const Color.fromARGB(144, 24, 255, 255) , width: 2.0),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              stock ? Icons.circle : Icons.circle_outlined,
+                              stock ? Icons.circle_outlined : Icons.circle_outlined,
                               color: stock ? Colors.green : Colors.red,
-                              size: 15,
+                              size: 18,
                             ),
                             SizedBox(width: 10.0),
                             Text(
@@ -134,7 +137,7 @@ class _StoreListPageState extends State<StoreListPage> {
               padding: EdgeInsets.all(8.0), // Espaciado interno para que el texto no toque el borde
               decoration: BoxDecoration(
                 color: Colors.black87,
-                border: Border.all(color: Colors.cyanAccent, width: 2.0), // Borde cian
+                border: Border.all(color: const Color.fromARGB(144, 24, 255, 255) , width: 2.0), // Borde cian
                 borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
               ),
               child: Text(
@@ -178,10 +181,13 @@ class _StoreListPageState extends State<StoreListPage> {
 
   @override
   Widget build(BuildContext context) {
+    String iDuser = context.watch<UserProvider>().iDuser;
+    int loged = context.watch<UserProvider>().loged;
     return Scaffold(
       backgroundColor: Colors.black87,
       appBar: AppBar(
         automaticallyImplyLeading: false, 
+        toolbarHeight: 85,
         backgroundColor: Colors.black87,
         elevation: 0,
         title: Container(
@@ -246,6 +252,10 @@ class _StoreListPageState extends State<StoreListPage> {
                       time: snapshot.data!.docs[index].data()['horario'],
                       contact: snapshot.data!.docs[index].data()['contacto'],
                       products: _listarProductos(snapshot.data!.docs[index].data()['productos']),
+                      latitud: snapshot.data!.docs[index].data()['latitud'],
+                      longitud: snapshot.data!.docs[index].data()['longitud'],
+                      iDuser: iDuser,
+                      log: loged,
                     );
 
                   }
@@ -268,6 +278,10 @@ class StoreTile extends StatefulWidget {
   final String time;
   final String contact;
   final List<Widget> products;
+  final double latitud;
+  final double longitud;
+  final String iDuser;
+  final int log;
 
   const StoreTile({
     Key? key,
@@ -277,7 +291,11 @@ class StoreTile extends StatefulWidget {
     required this.payments,
     required this.time,
     required this.contact,
-    required this.products
+    required this.products,
+    required this.latitud,
+    required this.longitud,
+    required this.iDuser,
+    required this.log,
   }) : super(key: key);
 
   @override
@@ -330,19 +348,58 @@ class _StoreTileState extends State<StoreTile> {
             },
           ),
           if (forminfo) ...[
-            const Divider(color: Colors.white, thickness: 3),
-
+            const Divider(color: Colors.purpleAccent, thickness: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Dirección: ',
+                      style: TextStyle(color: Colors.cyanAccent)
+                    ),
+                    TextSpan(
+                      text: widget.location,
+                      style: TextStyle(color: Colors.white)
+                    ),
+                  ]
+                ),
+                ),
+            ),
+            
+            const SizedBox(height: 10),
+            const Divider(color: Colors.purple, thickness: 2),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Ubicación: ',
-                  style: const TextStyle(color: Colors.cyanAccent),
-                ),
-                Text(
-                  widget.location,
-                  style: const TextStyle(color: Colors.white),
-                  softWrap: true,
-                ),
+                Text('Ver ubicación en el mapa', style: TextStyle(color: Colors.cyanAccent),),
+                Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: Colors.red, width: 2),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.location_on, color: Colors.redAccent,),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Mainscreen(
+                            loged: widget.log, 
+                            userID: widget.iDuser,
+                            initialIndex: 1, 
+                            lati: widget.latitud,
+                            long: widget.longitud,
+                            actvMark: true,
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                )
               ],
             ),
             const SizedBox(height: 10),
@@ -438,18 +495,22 @@ class _StoreTileState extends State<StoreTile> {
             const SizedBox(height: 10),
             const Divider(color: Colors.purple, thickness: 2),
 
-            Row(
-              children: [
-                Text(
-                  'Horaio: ',
-                  style: const TextStyle(color: Colors.cyanAccent),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Horario: ',
+                      style: TextStyle(color: Colors.cyanAccent)
+                    ),
+                    TextSpan(
+                      text: widget.time,
+                      style: TextStyle(color: Colors.white)
+                    ),
+                  ]
                 ),
-                Text(
-                  widget.time,
-                  style: const TextStyle(color: Colors.white),
-                  softWrap: true,
                 ),
-              ],
             ),
             const SizedBox(height: 10),
             const Divider(color: Colors.purple, thickness: 2),
@@ -468,7 +529,7 @@ class _StoreTileState extends State<StoreTile> {
               ],
             ),
             const SizedBox(height: 10),
-            const Divider(color: Colors.white, thickness: 4),
+            const Divider(color: Colors.purpleAccent, thickness: 4),
 
             Center(
               child: Padding(
@@ -494,126 +555,3 @@ class _StoreTileState extends State<StoreTile> {
 }
 
 //-----------------------------------------------
-
-class ProductForm extends StatefulWidget {
-  final String pName;
-  final String pPrice; 
-  final String pDesc;
-  final bool stck;
-  final GlobalKey<_ProductFormState> formKey;
-
-  ProductForm({
-    required this.pName,
-    required this.pPrice,
-    required this.pDesc,
-    required this.stck,
-    required this.formKey
-  }) : super(key: formKey);
-
-  @override
-  _ProductFormState createState() => _ProductFormState();
-}
-
-class _ProductFormState extends State<ProductForm> {
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(10.0),
-          border: Border.all(color: Colors.cyanAccent, width: 2.0),
-        ),
-        padding: const EdgeInsets.all(15.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            //--- Nombre ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  widget.pName,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 20.0),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Icono
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: Colors.cyanAccent, width: 2.0),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.image, 
-                      size: 40.0,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-
-                Column(
-                  children: [
-                    //--- Precio ---
-                    Text(
-                      '\$'+widget.pPrice,
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        color: Colors.cyanAccent,
-                      ),
-                    ),
-                    //--- Stock ---
-                    Row(
-                      children: [
-                        Icon(
-                          widget.stck ? Icons.circle : Icons.circle_outlined,
-                          color: widget.stck ? Colors.green : Colors.red,
-                          size: 30.0,
-                        ),
-                        SizedBox(width: 10.0),
-                        Text(
-                          widget.stck ? 'Disponible' : 'Sin stock',
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            SizedBox(height: 20.0),
-
-            //--- Descripción ---
-            Text(
-              widget.pDesc,
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

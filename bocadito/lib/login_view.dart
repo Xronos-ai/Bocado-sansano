@@ -1,7 +1,9 @@
 import 'package:bocadito/mainscreen.dart';
+import 'package:bocadito/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:provider/provider.dart';
 import 'utils/auth.dart';
 
 class LoginPage extends StatefulWidget {
@@ -31,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87,
+      backgroundColor: const Color.fromARGB(200, 0, 0, 0),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -120,10 +122,12 @@ class _LoginPageState extends State<LoginPage> {
                               content: Text('Contraseña incorrecta.'),
                             ));
                           } else if (result != null) {
+                            context.read<UserProvider>().changeIDuser(newiDuser: result);
+                            context.read<UserProvider>().changeLoged(newloged: 1);
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => Mainscreen(loged: 1, userID: result,)
+                                builder: (context) => Mainscreen(loged: 1, userID: result)
                               ),
                             );
                             print('supuesto id del usuario logeado es: '+result);
@@ -167,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => Mainscreen(loged: 2, userID: '',)
+                            builder: (context) => Mainscreen(loged: 2, userID: '')
                           ),
                         );
                       },

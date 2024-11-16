@@ -18,6 +18,12 @@ dependencies:
   go_router: ^14.3.0
   sliding_clipped_nav_bar: ^3.1.1
   provider: ^6.1.2
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^13.0.1
+  location: ^7.0.1
+  http: ^1.2.2
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   change_app_package_name: ^1.1.0

@@ -153,8 +153,6 @@ class _StoreListPageState extends State<StoreListPage> {
       ),
     );
   }
-
-
   //---------------------------------
 
   List<Widget> _listarProductos (List<dynamic> productsMaps){
@@ -173,11 +171,24 @@ class _StoreListPageState extends State<StoreListPage> {
     });
     return pagosBool;
   }
-
+  
   void _searchStore(String query) {
     setState(() {
+      if(query.isEmpty){
+        tiendasFiltradas = tiendasList;
+      } else {
+        tiendasFiltradas = tiendasList.where((store){
+          String storename = store.storeName.toLowerCase();
+          return storename.contains(query.toLowerCase());
+        }).toList();
+      }
     });
   }
+  
+  List<StoreTile> tiendasList = []; 
+  List<StoreTile> tiendasFiltradas = []; 
+
+  //------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -199,23 +210,25 @@ class _StoreListPageState extends State<StoreListPage> {
           
           child: Row(
             children: [
-              const Divider(color: Colors.black87,),
               const SizedBox(height: 40,),
+              Icon(Icons.search, size: 30, color: Colors.cyanAccent),
               Expanded(
                 child: TextField(
                   style: const TextStyle(color: Colors.white),
                   onChanged: (value) {
-                    _searchStore(value); 
+                    _searchStore(value);
                   },
                   decoration: const InputDecoration(
-                    hintText: 'Search',
+                    hintText: 'Buscar Tienda',
                     hintStyle: TextStyle(color: Color.fromARGB(255, 201, 199, 199)),
                     border: InputBorder.none,
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.search, color: Colors.cyanAccent),
+                icon: Icon(Icons.menu), 
+                iconSize: 30, 
+                color: Colors.cyanAccent,
                 onPressed: () {
                 },
               ),
@@ -227,6 +240,7 @@ class _StoreListPageState extends State<StoreListPage> {
       body: Center(
         child: Column(
           children: [
+            
             FutureBuilder(
               future: FirebaseFirestore.instance.collection('tiendas').get(), 
               builder: (context, snapshot) {
@@ -238,6 +252,35 @@ class _StoreListPageState extends State<StoreListPage> {
                 if (!snapshot.hasData){
                   return Text('No existe data aún');
                 }
+
+                tiendasList = snapshot.data!.docs.map<StoreTile>((doc) {
+                  var tienda = doc.data();
+                  return StoreTile(
+                    storeName: tienda['nombre'],
+                    iconData: Icons.restaurant,
+                    location: tienda['ubicacion'],
+                    payments: _dynamicToBool(tienda['pagos']),
+                    time: tienda['horario'],
+                    contact: tienda['contacto'],
+                    products: _listarProductos(tienda['productos']),
+                    latitud: tienda['latitud'],
+                    longitud: tienda['longitud'],
+                    iDuser: iDuser,
+                    log: loged,
+                  );
+                }).toList();
+
+                return Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: tiendasFiltradas.length,
+                    itemBuilder: (context, index) {
+                      return tiendasFiltradas[index]; // Mostrar StoreTile desde la lista
+                    },
+                  ),
+                );
+
+                /*
                 return Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -259,10 +302,11 @@ class _StoreListPageState extends State<StoreListPage> {
                     );
 
                   }
-                  )
-                );
+                ));
+                */
               }
             )
+            
           ],
         ),
       )
@@ -384,7 +428,7 @@ class _StoreTileState extends State<StoreTile> {
                   child: IconButton(
                     icon: Icon(Icons.location_on, color: Colors.redAccent,),
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => Mainscreen(
@@ -553,5 +597,3 @@ class _StoreTileState extends State<StoreTile> {
     );
   }
 }
-
-//-----------------------------------------------

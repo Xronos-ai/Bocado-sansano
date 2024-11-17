@@ -1,4 +1,3 @@
-import 'package:bocadito/login_view.dart';
 import 'package:bocadito/mainscreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -235,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   // Nombre de usuario
                   Expanded(
                     child: Text(
-                      'User name',
+                      'Administrador',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -243,20 +242,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   SizedBox(width: 20),
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.cyanAccent),
-                    onPressed: () {
-                      // Acción para cerrar sesión
-                      context.read<UserProvider>().changeIDuser(newiDuser: '');
-                      context.read<UserProvider>().changeLoged(newloged: 0);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Mainscreen(loged: 0, userID: '')
-                        ),
-                      );
-                    },
-                    tooltip: 'Cerrar sesión', // Tooltip opcional para accesibilidad
+                  Column(
+                    children: [
+                      Text('Salir', style: TextStyle(color: Colors.cyanAccent, fontSize: 12),),
+                      IconButton(
+                        icon: const Icon(Icons.logout, color: Colors.cyanAccent),
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          // Acción para cerrar sesión
+                          context.read<UserProvider>().changeIDuser(newiDuser: '');
+                          context.read<UserProvider>().changeLoged(newloged: 0);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Mainscreen(loged: 0, userID: '')
+                            ),
+                          );
+                        },// Tooltip opcional para accesibilidad
+                      ),
+                      
+                    ],
                   ),
                 ],
               ),

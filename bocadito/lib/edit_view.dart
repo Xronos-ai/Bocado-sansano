@@ -69,8 +69,6 @@ class _EditingStoreState extends State<EditingStore> {
     getStoreContact(widget.contact);
     getStoreLatitude(widget.latit);
     getStoreLongitud(widget.longit);
-    print('lat edit1 : '+lat.toString());
-    print('lon edit2: '+lon.toString());
   }
 
   void _initializeProducts(){
@@ -170,9 +168,6 @@ class _EditingStoreState extends State<EditingStore> {
       'latitud': lat,
       'longitud': lon,
     };
-
-    print('lat/latitud mapUp3: '+storeUp['latitud'].toString());
-    print('lon/longitud mapUp3: '+storeUp['longitud'].toString());
 
     await FirebaseFirestore.instance.collection('tiendas').doc(widget.storeID).set(storeUp);
   }
@@ -312,7 +307,7 @@ class _EditingStoreState extends State<EditingStore> {
                     ),
                     style: TextStyle(color: Colors.white),
                     onChanged: (String ubicacion) {
-                      getStoreLocation(ubicacion);
+                      getStoreName(ubicacion);
                     },
                   ),
                   //-----------------------------------------
@@ -357,8 +352,6 @@ class _EditingStoreState extends State<EditingStore> {
                             getStoreLatitude(resultado[0]);
                             getStoreLongitud(resultado[1]);
                             mapSaved = true;
-                            print('lat saved2: '+lat.toString());
-                            print('lon saved2: '+lon.toString());
                           },
                         )
                       )
@@ -501,7 +494,7 @@ class _EditingStoreState extends State<EditingStore> {
                     ),
                     style: TextStyle(color: Colors.white),
                     onChanged: (String horario) {
-                      getStoreLocation(horario);
+                      getStoreHours(horario);
                     },
                   ),
                   //-----------------------------------------

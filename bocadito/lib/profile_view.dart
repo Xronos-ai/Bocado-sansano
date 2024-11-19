@@ -30,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
   List<Widget> myStores = [];
   List<ProductForm> _productForms = [];
   bool mapSaved = false;
+  final _formKey = GlobalKey<FormState>(); // Clave global para el Formulario
 
   @override
   void initState() {
@@ -203,6 +204,16 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  bool juna = false;
+  bool card = false;
+  bool cash = false;
+  bool transf = false;
+
+  final TextEditingController _nameStoreController = TextEditingController();
+  final TextEditingController _directionController = TextEditingController();
+  final TextEditingController _horarioController = TextEditingController();
+  final TextEditingController _contactoController = TextEditingController();
+
   //-------------------------------------------
 
   @override
@@ -342,6 +353,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         const SizedBox(height: 20),
                         TextFormField(
+                          controller: _nameStoreController,
                           decoration: InputDecoration(
                             labelText: 'Nombre de la tienda*',
                             labelStyle: const TextStyle(color: Colors.cyanAccent),
@@ -361,6 +373,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         //---------------------------------------
                         const SizedBox(height: 20),
                         TextFormField(
+                          controller: _directionController,
                           decoration: InputDecoration(
                             labelText: 'Dirección*',
                             labelStyle: const TextStyle(color:  Colors.cyanAccent),
@@ -379,50 +392,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         //---------------------------------------
                         const SizedBox(height: 10),
-                        /*
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: GestureDetector(
-                            onTap: () async {
-                              final List<double> resultado = await Navigator.push(
-                                context, 
-                                MaterialPageRoute(builder: (context) => SetLocation(lati: -33.0353043, longi: -71.5956004,))
-                              );
-                              getStoreLatitude(resultado[0]);
-                              getStoreLongitud(resultado[1]);
-                              mapSaved = true;
-                              
-                            },
-                            child: Container(
-                              alignment: Alignment.centerLeft,
-                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                              ),
-                              child: Expanded(
-                                child: Row(
-                                  children: [
-                                    Text('Ubicar tienda en el mapa', 
-                                    style: TextStyle(
-                                      color: Colors.cyanAccent,
-                                      fontSize: 16
-                                    ),),
-                                    Icon(
-                                      Icons.add_location, 
-                                      color: mapSaved ? Colors.cyanAccent : Colors.redAccent,
-                                    ),
-                                  ],
-                                )
-                              )
-                            ),
-                          ),
-                        ),
-                        */
                         //------------------------------------
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Ubicar tienda en el mapa', style: TextStyle(color: Colors.cyanAccent),),
+                            Text('Ubicar tienda en el mapa*', style: TextStyle(color: Colors.cyanAccent, fontSize: 16),),
                             Container(
                               width: 45,
                               height: 45,
@@ -440,7 +414,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   );
                                   getStoreLatitude(resultado[0]);
                                   getStoreLongitud(resultado[1]);
-                                  mapSaved = true;
+                                  setState(() {
+                                    mapSaved = true;
+                                  });
                                 },
                               )
                             )
@@ -469,6 +445,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               onTap: (){
                                 setState(() {
                                   _paymentsCheck['Junaeb'] = !_paymentsCheck['Junaeb']!;
+                                  juna = !juna;
                                 });                             
                               },
                               child: Container(
@@ -494,6 +471,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               onTap: (){
                                 setState(() {
                                   _paymentsCheck['Tarjeta'] = !_paymentsCheck['Tarjeta']!;
+                                  card = !card;
                                 });                             
                               },
                               child: Container(
@@ -519,6 +497,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               onTap: (){
                                 setState(() {
                                   _paymentsCheck['Efectivo'] = !_paymentsCheck['Efectivo']!;
+                                  cash = !cash;
                                 });                             
                               },
                               child: Container(
@@ -544,6 +523,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               onTap: (){
                                 setState(() {
                                   _paymentsCheck['Transferencia'] = !_paymentsCheck['Transferencia']!;
+                                  transf = !transf;
                                 });                             
                               },
                               child: Container(
@@ -573,6 +553,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         //---------------------------------------
                         const SizedBox(height: 20),
                         TextFormField(
+                          controller: _horarioController,
                           decoration: InputDecoration(
                             labelText: 'Horario*',
                             labelStyle: const TextStyle(color:  Colors.cyanAccent),
@@ -592,6 +573,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         //---------------------------------------
                         const SizedBox(height: 20),
                         TextFormField(
+                          controller: _contactoController,
                           decoration: InputDecoration(
                             labelText: 'Contacto*',
                             labelStyle: const TextStyle(color:  Colors.cyanAccent),
@@ -680,14 +662,50 @@ class _ProfilePageState extends State<ProfilePage> {
                         //------ Botón para registrar la tienda ------
                         ElevatedButton(
                           onPressed: () {
-                            _collectProductInfo();
-                            createData();
-                            setState(() {
-                              _isFormVisible = !_isFormVisible; 
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                              content: Text('Tienda registrada. Revisa "Mis tiendas".'),
-                            ));
+                            if(juna || card || cash || transf){
+                              if(_nameStoreController.text.isNotEmpty){
+                                if(_directionController.text.isNotEmpty){
+                                  if(mapSaved){
+                                    if(_horarioController.text.isNotEmpty){
+                                      if(_contactoController.text.isNotEmpty){
+                                        _collectProductInfo();
+                                        createData();
+                                        setState(() {
+                                          _isFormVisible = !_isFormVisible; 
+                                        });
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                          content: Text('Tienda registrada. Revisa "Mis tiendas".'),
+                                        ));
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                          content: Text('Debes completar el campo "Contacto".'),
+                                        ));
+                                      }
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                        content: Text('Debes completar el campo "Horario".'),
+                                      ));
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                      content: Text('Debes ubicar tu tienda en el mapa.'),
+                                    ));
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                    content: Text('Debes completar el campo "Dirección".'),
+                                  ));
+                                }
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                  content: Text('Debes completar el campo "Nombre de la tienda".'),
+                                ));
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text('Elige por lo menos un método de pago.'),
+                              ));
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color.fromARGB(255, 123, 21, 141),

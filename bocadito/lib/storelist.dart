@@ -176,7 +176,9 @@ class _StoreListPageState extends State<StoreListPage> {
     setState(() {
       if(query.isEmpty){
         tiendasFiltradas = tiendasList;
+        searcher = false;
       } else {
+        searcher = true;
         tiendasFiltradas = tiendasList.where((store){
           String storename = store.storeName.toLowerCase();
           return storename.contains(query.toLowerCase());
@@ -187,6 +189,7 @@ class _StoreListPageState extends State<StoreListPage> {
   
   List<StoreTile> tiendasList = []; 
   List<StoreTile> tiendasFiltradas = []; 
+  bool searcher = false;
 
   //------------------------------
 
@@ -270,12 +273,20 @@ class _StoreListPageState extends State<StoreListPage> {
                   );
                 }).toList();
 
-                return Expanded(
+                return searcher ? Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: tiendasFiltradas.length,
                     itemBuilder: (context, index) {
                       return tiendasFiltradas[index]; // Mostrar StoreTile desde la lista
+                    },
+                  ),
+                ) : Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: tiendasList.length,
+                    itemBuilder: (context, index) {
+                      return tiendasList[index]; // Mostrar StoreTile desde la lista
                     },
                   ),
                 );
